@@ -13,7 +13,7 @@ Solo Clona el Repositorio:
 git clone https://github.com/MyDiDev/Calculadora-IRS.git
 ```
 
-Move to the new Directory and Open in Visual Studio
+Direccionate a la carpeta generada
 
 ```bash
 cd Calculadora-IRS
