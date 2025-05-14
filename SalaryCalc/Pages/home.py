@@ -271,8 +271,8 @@ def index() -> rx.Component:
                                     rx.dialog.description(
                                         rx.vstack(
                                             rx.text(f"Empleado: {State.worker}"),
-                                            rx.foreach(State.calculate_data.items(), lambda name, data: rx.box(
-                                                rx.text(f"{name} {data}"),
+                                            rx.foreach(State.calculate_data.items(), lambda data: rx.box(
+                                                rx.text(f"{data[0]} {data[1]}"),
                                             ))
                                         )
                                     ),
@@ -378,8 +378,8 @@ def index() -> rx.Component:
                                     rx.dialog.description(
                                         rx.vstack(
                                             rx.text(f"Empleado: {State.worker}"),
-                                            rx.foreach(State.calculate_data.items(), lambda name, data: rx.box(
-                                                rx.text(f"{name} {data}"),
+                                            rx.foreach(State.calculate_data.items(), lambda data: rx.box(
+                                                rx.text(f"{data[0]} {data[1]}"),
                                             ))
                                         )
                                     ),
