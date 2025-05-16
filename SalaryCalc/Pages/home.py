@@ -65,12 +65,13 @@ class State(rx.State):
         if not data.get("empleado") or not data.get("s_bruto") or (self.bonificacion and not data.get("b_value")):
             yield rx.toast.error("Llene las entradas",  close_button=True)
             return
+        
 
         try:
             self.worker = data["empleado"]
             self.s_bruto = float(data["s_bruto"])
             
-            if self.s_bruto <= 0:
+            if self.s_bruto <= 0 or self.s_bruto < 20000:
                 yield rx.toast.error("Ingrese un Sueldo Bruto valido", close_button=True)
                 return
             
