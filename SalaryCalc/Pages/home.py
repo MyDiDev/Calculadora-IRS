@@ -20,6 +20,7 @@ class State(rx.State):
 
     bonificacion: bool = False
     discount: bool = False
+    calculated: bool = False
     
     @rx.event
     def show_field(self, var:str):
@@ -57,15 +58,20 @@ class State(rx.State):
             if item["id"] == id:
                 item["description"] = desc
                 item["value"] = value
-
     
     @rx.event
     def calculate_salary(self, data:dict):
         print(data)
         if not data.get("empleado") or not data.get("s_bruto") or (self.bonificacion and not data.get("b_value")):
             yield rx.toast.error("Llene las entradas",  close_button=True)
+            self.calculated = False
             return
-        
+
+        if float(data.get("s_bruto")) < 20000:
+            yield rx.toast.error("Ingrese un sueldo valido al minimo",  close_button=True)
+            self.calculated = False
+            return
+
 
         try:
             self.worker = data["empleado"]
@@ -73,6 +79,7 @@ class State(rx.State):
             
             if self.s_bruto <= 0 or self.s_bruto < 20000:
                 yield rx.toast.error("Ingrese un Sueldo Bruto valido", close_button=True)
+                self.calculated = False
                 return
             
             self.afp = self.s_bruto * 0.0304
@@ -104,16 +111,15 @@ class State(rx.State):
             self.calculate_data.update({"SFS: ":f"{round(self.sfs,2):,}"})
             self.calculate_data.update({"ISR: ":f"{round(self.r_isr, 2):,}"})
             self.calculate_data.update({"Bonificacion: ":f"{self.bonificacion_res}"})
-            self.calculate_data.update({"Sueldo Neto: ":f"{round(self.s_neto, 2):,}"})
             
             if self.discount:
                 for discount in self.disc_items:
                     if discount["description"] and discount["value"]:
                         self.calculate_data.update({f"{discount['description']}: ":f"{float(discount['value']):,.2f}"})
                         self.s_neto -= float(discount["value"])
-
-            for data, name in self.calculate_data.items():
-                print(data, name)
+                        self.calculate_data.update({"Sueldo Neto: ":f"{round(self.s_neto, 2):,}"})
+            
+            self.calculated = True
 
             yield rx.toast.success("Calculos Exitosos!", close_button=True)
             
@@ -268,15 +274,39 @@ def index() -> rx.Component:
                                     )
                                 ),
                                 rx.dialog.content(
-                                    rx.dialog.title("Resultados del Calculo", margin_y=".5em"),
-                                    rx.dialog.description(
-                                        rx.vstack(
-                                            rx.text(f"Empleado: {State.worker}"),
-                                            rx.foreach(State.calculate_data.items(), lambda data: rx.box(
-                                                rx.text(f"{data[0]} {data[1]}"),
-                                            ))
+                                    rx.cond(
+                                        State.calculated,
+                                        rx.fragment(
+                                            rx.dialog.title("Resultados del Calculo", margin_y=".5em"),
+                                            rx.dialog.description(
+                                                rx.table.root(
+                                                    rx.table.header(
+                                                        rx.table.row(
+                                                            rx.table.column_header_cell("Empleado"),
+                                                            rx.foreach(State.calculate_data, lambda data: rx.fragment(
+                                                                rx.table.column_header_cell(data[0])
+                                                            )),
+                                                        )
+                                                    ),
+                                                    rx.table.body(
+                                                        rx.table.row(
+                                                            rx.table.cell(State.worker),
+                                                            rx.foreach(State.calculate_data, lambda data: rx.fragment(
+                                                                rx.table.cell(data[1]),
+                                                            )),
+                                                        )
+                                                    ),
+                                                ),
+                                            )
+                                        ),
+                                        rx.fragment(
+                                            rx.dialog.title("Error al Calcular Datos", color="red", margin_y=".5em"),
+                                            rx.dialog.description(
+                                                rx.text("Intente Calcular Otra vez", size="3"),
+                                            ),
                                         )
                                     ),
+                                    
                                     rx.dialog.close(
                                         rx.button("Cerrar Resultados", margin_y="1em", style={"cursor":"pointer"})
                                     )
@@ -364,7 +394,7 @@ def index() -> rx.Component:
                                     width="100%",
                                 )
                             ),
-                            rx.dialog.root(
+                             rx.dialog.root(
                                 rx.dialog.trigger(
                                     rx.button(
                                         "Calcular",
@@ -375,15 +405,39 @@ def index() -> rx.Component:
                                     )
                                 ),
                                 rx.dialog.content(
-                                    rx.dialog.title("Resultados del Calculo", margin_y=".5em"),
-                                    rx.dialog.description(
-                                        rx.vstack(
-                                            rx.text(f"Empleado: {State.worker}"),
-                                            rx.foreach(State.calculate_data.items(), lambda data: rx.box(
-                                                rx.text(f"{data[0]} {data[1]}"),
-                                            ))
+                                    rx.cond(
+                                        State.calculated,
+                                        rx.fragment(
+                                            rx.dialog.title("Resultados del Calculo", margin_y=".5em"),
+                                            rx.dialog.description(
+                                                rx.table.root(
+                                                    rx.table.header(
+                                                        rx.table.row(
+                                                            rx.table.column_header_cell("Empleado"),
+                                                            rx.foreach(State.calculate_data, lambda data: rx.fragment(
+                                                                rx.table.column_header_cell(data[0])
+                                                            )),
+                                                        )
+                                                    ),
+                                                    rx.table.body(
+                                                        rx.table.row(
+                                                            rx.table.cell(State.worker),
+                                                            rx.foreach(State.calculate_data, lambda data: rx.fragment(
+                                                                rx.table.cell(data[1]),
+                                                            )),
+                                                        )
+                                                    ),
+                                                ),
+                                            )
+                                        ),
+                                        rx.fragment(
+                                            rx.dialog.title("Error al Calcular Datos", color="red", margin_y=".5em"),
+                                            rx.dialog.description(
+                                                rx.text("Intente Calcular Otra vez", size="3"),
+                                            ),
                                         )
                                     ),
+                                    
                                     rx.dialog.close(
                                         rx.button("Cerrar Resultados", margin_y="1em", style={"cursor":"pointer"})
                                     )
